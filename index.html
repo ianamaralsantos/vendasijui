@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fale com a gente</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #ffffff;
+    --text: #0f1115;
+    --muted: #6b7280;
+    --accent: #25D366; /* verde whatsapp */
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 40px 32px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+  .spinner {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    border: 4px solid #e5e7eb;
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  h1 {
+    font-size: 18px;
+    color: var(--text);
+    margin: 0 0 8px;
+  }
+  p {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0;
+  }
+  .fallback {
+    display: none;
+    margin-top: 20px;
+  }
+  .fallback a {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .spinner { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="spinner" aria-hidden="true"></div>
+  <h1>Te chamando no WhatsApp...</h1>
+  <p>Aguarde só um instante</p>
+  <div class="fallback" id="fallback">
+    <a id="fallback-link" href="#">Clique aqui se não for redirecionado</a>
+  </div>
+</div>
+
+<script>
+  // ======= CONFIGURAÇÃO: edite aqui =======
+  // Coloque o número de cada vendedora no formato internacional, SEM espaços, +, ou símbolos.
+  // Exemplo: 55 (Brasil) + DDD (54) + número = 5554999999999
+  const VENDEDORAS = [
+    { nome: "Vendedora 1", numero: "5554900000001" },
+    { nome: "Vendedora 2", numero: "5554900000002" },
+    { nome: "Vendedora 3", numero: "5554900000003" },
+    { nome: "Vendedora 4", numero: "5554900000004" }
+  ];
+
+  // Mensagem padrão que já vai vir escrita no WhatsApp (opcional)
+  const MENSAGEM = "Olá! Vim pelo link do Instagram/Linktree e gostaria de mais informações sobre os cursos.";
+  // =========================================
+
+  const NAMESPACE = "senac-revezamento-vendedoras"; // identificador único do seu contador
+  const KEY = "fila";
+
+  async function getProximoIndice() {
+    try {
+      // Usa o contador online gratuito para saber de quem é a vez
+      const resp = await fetch(
+        `https://api.countapi.xyz/hit/${NAMESPACE}/${KEY}`
+      );
+      const data = await resp.json();
+      // data.value vai incrementando 1, 2, 3, 4, 5, 6...
+      return (data.value - 1) % VENDEDORAS.length;
+    } catch (e) {
+      // Se o contador falhar (sem internet, serviço fora do ar), escolhe alguém aleatoriamente
+      return Math.floor(Math.random() * VENDEDORAS.length);
+    }
+  }
+
+  async function redirecionar() {
+    const indice = await getProximoIndice();
+    const vendedora = VENDEDORAS[indice];
+    const link = `https://wa.me/${vendedora.numero}?text=${encodeURIComponent(MENSAGEM)}`;
+
+    // mostra um link de fallback caso o redirect automático seja bloqueado
+    const fallbackLink = document.getElementById("fallback-link");
+    fallbackLink.href = link;
+    document.getElementById("fallback").style.display = "block";
+
+    window.location.href = link;
+  }
+
+  redirecionar();
+</script>
+
+</body>
+</html>
